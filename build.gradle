@@ -1,0 +1,61 @@
+apply plugin: "war"
+apply plugin: "jacoco"
+apply plugin: "sonar"
+
+sourceCompatibility = 1.6
+version = "1.0"
+
+repositories {
+	flatDir {
+		dirs = ["jacoco-lib"]
+	}
+}
+
+jar {
+	manifest {
+		attributes(
+				"Manifest-Version": "1.0",
+				"Gradle-Version": gradle.gradleVersion,
+				"Implementation-Title": project.name,
+				"Implementation-Version": project.version,
+				"Build-Date": new Date().format("yyyy-MM-dd HH:mm:ss")
+				)
+	}
+}
+
+sourceSets {
+	main.java.srcDirs = ["src"]
+	test.java.srcDirs = ["test"]
+}
+
+dependencies {
+	compile fileTree(dir: "WebContent/WEB-INF/lib", include: "*.jar")
+	providedCompile fileTree(dir: "container-lib", include: "*.jar")
+	testCompile fileTree(dir: "test-lib", include: "*.jar")
+	testRuntime fileTree(dir: "jacoco-lib", include: "*.jar")
+}
+
+sonar {
+	server.url = "http://localhost:9000"
+	database {
+		url = "jdbc:h2:tcp://localhost:9092/sonar"
+		driverClassName = "org.h2.Driver"
+		username = "sonar"
+		password = "sonar"
+	}
+	project	{
+		key = project.name
+		name = project.name
+		description = "Fake description"
+		language = "java"
+		sourceEncoding = "UTF-8"
+		dynamicAnalysis  = "reuseReports"
+		withProjectProperties { props ->
+			props["sonar.core.codeCoveragePlugin"] = "jacoco"
+			props["sonar.jacoco.itReportPath"] = "${buildDir}/jacoco/jacocoIt.exec"
+			props["sonar.jacoco.reportPath"] = "${buildDir}/jacoco/jacoco.exec"
+		}
+	}
+}
+
+jacoco { toolVersion = "0.6.3.201306030806" }
